@@ -5,7 +5,7 @@ LABEL maintainer="jekkos / modified for Render deployment"
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
-    libicu-dev libgd-dev libzip-dev unzip git wget \
+    libicu-dev libgd-dev libzip-dev unzip git wget curl \
     && docker-php-ext-install mysqli bcmath intl gd zip
 
 # Enable Apache rewrite
@@ -15,9 +15,15 @@ RUN a2enmod rewrite
 ENV PHP_TIMEZONE=Asia/Jakarta
 RUN echo "date.timezone = \"${PHP_TIMEZONE}\"" > /usr/local/etc/php/conf.d/timezone.ini
 
-# Copy all files
+# Copy project files
 WORKDIR /app
 COPY . /app
+
+# Install Composer (✅ ini bagian penting)
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+# Jalankan Composer install (✅ ini juga penting)
+RUN composer install --no-dev --optimize-autoloader --no-interaction
 
 # Link public folder ke Apache root
 RUN rm -rf /var/www/html && ln -s /app/public /var/www/html
