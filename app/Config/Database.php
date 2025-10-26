@@ -9,131 +9,64 @@ use CodeIgniter\Database\Config;
  */
 class Database extends Config
 {
-    /**
-     * The directory that holds the Migrations and Seeds directories.
-     */
     public string $filesPath = APPPATH . 'Database' . DIRECTORY_SEPARATOR;
-
-    /**
-     * Lets you choose which connection group to use if no other is specified.
-     */
     public string $defaultGroup = 'default';
 
-    /**
-     * The default database connection.
-     *
-     * @var array<string, mixed>
-     */
     public array $default = [
-        'DSN'          => '',
-        'hostname'     => 'localhost',
-        'username'     => 'admin',
-        'password'     => 'pointofsale',
-        'database'     => 'ospos',
-        'DBDriver'     => 'MySQLi',
-        'DBPrefix'     => 'ospos_',
-        'pConnect'     => false,
-        'DBDebug'      => (ENVIRONMENT !== 'production'),
-        'charset'      => 'utf8mb4',
-        'DBCollat'     => 'utf8mb4_general_ci',
-        'swapPre'      => '',
-        'encrypt'      => false,
-        'compress'     => false,
-        'strictOn'     => false,
-        'failover'     => [],
-        'port'         => 3306,
-        'dateFormat'   => [
-            'date'     => 'Y-m-d',
-            'datetime' => 'Y-m-d H:i:s',
-            'time'     => 'H:i:s',
-        ],
+        'DSN'      => '',
+        'hostname' => 'localhost',
+        'username' => 'admin',
+        'password' => 'pointofsale',
+        'database' => 'ospos',
+        'DBDriver' => 'MySQLi',
+        'DBPrefix' => 'ospos_',
+        'pConnect' => false,
+        'DBDebug'  => (ENVIRONMENT !== 'production'),
+        'charset'  => 'utf8mb4',
+        'DBCollat' => 'utf8mb4_general_ci',
+        'swapPre'  => '',
+        'encrypt'  => true, // Aiven SSL perlu ini aktif
+        'compress' => false,
+        'strictOn' => false,
+        'failover' => [],
+        'port'     => 3306,
+        'ssl_ca'   => '',
     ];
 
-    /**
-     * This database connection is used when running PHPUnit database tests.
-     *
-     * @var array<string, mixed>
-     */
-    public array $tests = [
-        'DSN'          => '',
-        'hostname'     => 'localhost',
-        'username'     => 'admin',
-        'password'     => 'pointofsale',
-        'database'     => 'ospos',
-        'DBDriver'     => 'MySQLi',
-        'DBPrefix'     => 'ospos_',
-        'pConnect'     => false,
-        'DBDebug'      => (ENVIRONMENT !== 'production'),
-        'charset'      => 'utf8mb4',
-        'DBCollat'     => 'utf8mb4_general_ci',
-        'swapPre'      => '',
-        'encrypt'      => false,
-        'compress'     => false,
-        'strictOn'     => false,
-        'failover'     => [],
-        'port'         => 3306,
-        'foreignKeys'  => true,
-        'busyTimeout'  => 1000,
-        'dateFormat'   => [
-            'date'     => 'Y-m-d',
-            'datetime' => 'Y-m-d H:i:s',
-            'time'     => 'H:i:s',
-        ],
-    ];
-
-    /**
-     * This database connection is used when developing against non-production data.
-     *
-     * @var array
-     */
-    public $development = [
-        'DSN'          => '',
-        'hostname'     => 'localhost',
-        'username'     => 'admin',
-        'password'     => 'pointofsale',
-        'database'     => 'ospos',
-        'DBDriver'     => 'MySQLi',
-        'DBPrefix'     => 'ospos_',
-        'pConnect'     => false,
-        'DBDebug'      => (ENVIRONMENT !== 'production'),
-        'charset'      => 'utf8mb4',
-        'DBCollat'     => 'utf8mb4_general_ci',
-        'swapPre'      => '',
-        'encrypt'      => false,
-        'compress'     => false,
-        'strictOn'     => false,
-        'failover'     => [],
-        'port'         => 3306,
-        'foreignKeys'  => true,
-        'busyTimeout'  => 1000,
-        'dateFormat'   => [
-            'date'     => 'Y-m-d',
-            'datetime' => 'Y-m-d H:i:s',
-            'time'     => 'H:i:s',
-        ],
-    ];
+    public array $tests = [];
+    public array $development = [];
 
     public function __construct()
     {
         parent::__construct();
 
-        // Ensure that we always set the database group to 'tests' if
-        // we are currently running an automated test suite, so that
-        // we don't overwrite live data on accident.
+        // Pilih environment group
         switch (ENVIRONMENT) {
             case 'testing':
                 $this->defaultGroup = 'tests';
                 break;
-            case 'development';
+            case 'development':
                 $this->defaultGroup = 'development';
+                break;
+            default:
+                $this->defaultGroup = 'default';
                 break;
         }
 
-        foreach ([&$this->development, &$this->tests, &$this->default] as &$config) {
-            $config['hostname'] = !getenv('MYSQL_HOST_NAME') ? $config['hostname'] : getenv('MYSQL_HOST_NAME');
-            $config['username'] = !getenv('MYSQL_USERNAME') ? $config['username'] : getenv('MYSQL_USERNAME');
-            $config['password'] = !getenv('MYSQL_PASSWORD') ? $config['password'] : getenv('MYSQL_PASSWORD');
-            $config['database'] = !getenv('MYSQL_DB_NAME') ? $config['database'] : getenv('MYSQL_DB_NAME');
-        }
+        // Ambil konfigurasi dari environment Render (Aiven)
+        $this->default['hostname'] = getenv('DB_HOST') ?: $this->default['hostname'];
+        $this->default['username'] = getenv('DB_USER') ?: $this->default['username'];
+        $this->default['password'] = getenv('DB_PASS') ?: $this->default['password'];
+        $this->default['database'] = getenv('DB_NAME') ?: $this->default['database'];
+        $this->default['port']     = getenv('DB_PORT') ?: 3306;
+
+        // SSL support (Render/Aiven requires CA cert)
+        $this->default['encrypt'] = [
+            'ssl_ca' => getenv('DB_SSL_CA') ?: null,
+            'ssl_verify' => true,
+        ];
+
+        // Timezone (optional)
+        date_default_timezone_set(getenv('PHP_TIMEZONE') ?: 'Asia/Jakarta');
     }
 }
