@@ -3,9 +3,9 @@ FROM php:8.2-apache
 
 LABEL maintainer="jekkos / modified for Render deployment"
 
-# Install dependencies
+# Install dependencies (📌 tambahkan libssl-dev di sini)
 RUN apt-get update && apt-get install -y \
-    libicu-dev libgd-dev libzip-dev unzip git wget curl \
+    libicu-dev libgd-dev libzip-dev unzip git wget curl libssl-dev \
     && docker-php-ext-install mysqli bcmath intl gd zip
 
 # Enable Apache rewrite
@@ -19,10 +19,10 @@ RUN echo "date.timezone = \"${PHP_TIMEZONE}\"" > /usr/local/etc/php/conf.d/timez
 WORKDIR /app
 COPY . /app
 
-# Install Composer (✅ ini bagian penting)
+# Install Composer (✅ penting)
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Jalankan Composer install (✅ ini juga penting)
+# Jalankan Composer install (✅ penting)
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
 # Link public folder ke Apache root
