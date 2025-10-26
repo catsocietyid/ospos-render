@@ -1,5 +1,11 @@
 <?php
 
+// === AIVEN SSL PATCH for Render ===
+if (getenv('DB_SSL_CA')) {
+    // Buat file CA certificate di container
+    file_put_contents('/tmp/ca-cert.pem', base64_decode(getenv('DB_SSL_CA')));
+}
+
 /*
  *---------------------------------------------------------------
  * CHECK PHP VERSION
