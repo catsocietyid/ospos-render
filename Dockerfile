@@ -23,7 +23,9 @@ COPY . /app
 RUN rm -rf /var/www/html && ln -s /app/public /var/www/html
 
 # Permissions
-RUN chmod -R 770 /app/writable && chown -R www-data:www-data /app
+RUN mkdir -p /app/writable/cache /app/writable/logs /app/writable/uploads && \
+    chmod -R 770 /app/writable && \
+    chown -R www-data:www-data /app
 
 # Expose port 8080 (Render uses this)
 EXPOSE 8080
