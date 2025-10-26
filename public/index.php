@@ -1,5 +1,7 @@
 <?php
 
+file_put_contents('/tmp/db_debug.log', "DB_SSL_CA=" . substr(getenv('DB_SSL_CA') ?? '', 0, 100) . PHP_EOL, FILE_APPEND);
+
 // === AIVEN SSL PATCH for Render ===
 if (getenv('DB_SSL_CA')) {
     // Buat file CA certificate di container
